@@ -1,0 +1,40 @@
+---
+// Header component with logo and toggle buttons
+---
+
+<header class="flex items-center justify-between py-4 px-6 bg-transparent border-b border-ctp-surface0 shrink-0">
+  <div class="flex items-center gap-4">
+    <div class="flex items-center gap-1 text-base font-semibold">
+      <span class="text-ctp-green">&gt;</span>
+      <span class="text-ctp-text">nolan</span>
+      <span class="w-2 h-4 bg-ctp-mauve animate-blink"></span>
+    </div>
+    <span class="hidden sm:block text-[11px] text-ctp-subtext0 py-1 px-2.5 bg-ctp-surface0 rounded uppercase tracking-wide">Design Engineer</span>
+  </div>
+  <div class="flex items-center gap-2">
+    <button class="toggle-btn grid-toggle" aria-label="Toggle grid overlay" title="Toggle grid">
+      <svg class="icon-grid" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7"></rect>
+        <rect x="14" y="3" width="7" height="7"></rect>
+        <rect x="3" y="14" width="7" height="7"></rect>
+        <rect x="14" y="14" width="7" height="7"></rect>
+      </svg>
+    </button>
+    <button class="toggle-btn theme-toggle" aria-label="Toggle theme" title="Toggle light/dark theme">
+      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+      </svg>
+      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+      </svg>
+    </button>
+  </div>
+</header>
