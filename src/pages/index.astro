@@ -1,0 +1,39 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Alpha" description="A dynamic portfolio experience">
+  <main class="relative min-h-dvh flex flex-col items-center justify-center px-6">
+    <!-- Ambient gradient background -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse"></div>
+      <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+    </div>
+
+    <!-- Content -->
+    <div class="relative z-10 text-center max-w-2xl">
+      <h1 class="text-5xl md:text-7xl font-bold tracking-tight mb-6">
+        <span class="text-text-primary">Alpha</span>
+      </h1>
+
+      <p class="text-lg md:text-xl text-text-secondary mb-12 leading-relaxed">
+        Building something new.
+      </p>
+
+      <!-- Interactive hint -->
+      <div class="flex items-center justify-center gap-2 text-text-muted text-sm">
+        <span class="inline-block w-2 h-2 bg-accent rounded-full animate-pulse"></span>
+        <span>Under construction</span>
+      </div>
+    </div>
+
+    <!-- Navigation placeholder for future -->
+    <nav class="absolute bottom-8 left-1/2 -translate-x-1/2">
+      <ul class="flex items-center gap-8 text-sm text-text-muted">
+        <li class="hover:text-text-secondary transition-colors cursor-pointer">Work</li>
+        <li class="hover:text-text-secondary transition-colors cursor-pointer">About</li>
+        <li class="hover:text-text-secondary transition-colors cursor-pointer">Contact</li>
+      </ul>
+    </nav>
+  </main>
+</Base>
