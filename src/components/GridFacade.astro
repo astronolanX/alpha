@@ -1,0 +1,379 @@
+---
+// GridFacade.astro - Dynamic modular grid with alignment guides
+---
+
+<div class="grid-facade" id="gridFacade">
+  <div class="grid-container" id="gridContainer"></div>
+  <div class="guides-container" id="guidesContainer"></div>
+</div>
+
+<style is:global>
+  .grid-facade {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: var(--color-surface);
+  }
+
+  .grid-container {
+    position: absolute;
+    background-color: var(--color-surface);
+  }
+
+  .guides-container {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .grid-block {
+    position: absolute;
+    background-color: #ffffff;
+    transform: scale(0);
+    opacity: 0;
+    cursor: pointer;
+    pointer-events: auto;
+    z-index: 2;
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+                opacity 0.4s ease-out;
+  }
+
+  .grid-block.visible {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  .grid-block.visible:hover {
+    transform: scale(1.03);
+    transition: transform 0.2s ease-out;
+  }
+
+  .grid-block.clicking {
+    animation: blockBounce 0.25s ease-out;
+  }
+
+  @keyframes blockBounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.92); }
+    100% { transform: scale(1); }
+  }
+
+  .guide-line {
+    position: absolute;
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+    z-index: 1;
+  }
+
+  .guide-line.visible {
+    opacity: 1;
+  }
+
+  .guide-line.horizontal {
+    height: 1px;
+    left: 0;
+    right: 0;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      var(--color-guide-h) 10%,
+      var(--color-guide-h) 90%,
+      transparent 100%
+    );
+  }
+
+  .guide-line.vertical {
+    width: 1px;
+    top: 0;
+    bottom: 0;
+    background: linear-gradient(180deg,
+      transparent 0%,
+      var(--color-guide-h) 10%,
+      var(--color-guide-h) 90%,
+      transparent 100%
+    );
+  }
+
+</style>
+
+<script is:inline>
+  (function() {
+    var container = document.getElementById('gridContainer');
+    var guidesContainer = document.getElementById('guidesContainer');
+
+    if (!container || !guidesContainer) {
+      console.error('Grid containers not found');
+      return;
+    }
+
+    var cols = 12;
+    var rows = 12;
+    var blocks = [];
+    var cellSize = 0;
+    var gridOffsetX = 0;
+    var gridOffsetY = 0;
+    var NUM_BLOCKS = 7;
+    var GUTTER = 24; // pixels between blocks
+
+    function calculateGrid() {
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+
+      // Target cell size based on viewport (aiming for ~80-100px cells)
+      var targetCellSize = Math.min(vw, vh) < 640 ? 64 : (Math.min(vw, vh) < 1024 ? 80 : 96);
+
+      // Calculate cols and rows to fill entire viewport with square cells
+      cols = Math.ceil(vw / targetCellSize);
+      rows = Math.ceil(vh / targetCellSize);
+
+      // Recalculate cell size to exactly fill viewport
+      cellSize = Math.max(vw / cols, vh / rows);
+
+      // Ensure we have enough cells to cover viewport
+      cols = Math.ceil(vw / cellSize);
+      rows = Math.ceil(vh / cellSize);
+
+      // No offset needed - grid starts at 0,0 and fills viewport
+      gridOffsetX = 0;
+      gridOffsetY = 0;
+    }
+
+    // Generate a random number biased toward the center (0.5)
+    function centerBiasedRandom() {
+      // Average of two random numbers creates a center bias
+      return (Math.random() + Math.random()) / 2;
+    }
+
+    function generateRandomLayout() {
+      blocks = [];
+      var occupied = [];
+      for (var i = 0; i < rows; i++) {
+        occupied[i] = [];
+        for (var j = 0; j < cols; j++) {
+          occupied[i][j] = false;
+        }
+      }
+
+      // Define a tighter center region (middle 50% of the grid)
+      var colMargin = Math.floor(cols * 0.25);
+      var rowMargin = Math.floor(rows * 0.25);
+      var centerColStart = colMargin;
+      var centerColEnd = cols - colMargin;
+      var centerRowStart = rowMargin;
+      var centerRowEnd = rows - rowMargin;
+
+      for (var i = 0; i < NUM_BLOCKS; i++) {
+        var block = tryPlaceBlock(occupied, centerColStart, centerColEnd, centerRowStart, centerRowEnd);
+        if (block) {
+          blocks.push(block);
+        }
+      }
+    }
+
+    function tryPlaceBlock(occupied, minCol, maxCol, minRow, maxRow) {
+      for (var attempt = 0; attempt < 100; attempt++) {
+        // Random size between 1-3 cells (square or rectangular)
+        var width = 1 + Math.floor(Math.random() * 3);
+        var height = 1 + Math.floor(Math.random() * 3);
+
+        // Ensure block fits within center region
+        var availableCols = maxCol - minCol - width + 1;
+        var availableRows = maxRow - minRow - height + 1;
+
+        if (availableCols <= 0 || availableRows <= 0) continue;
+
+        // Use center-biased random to cluster blocks toward middle
+        var col = minCol + Math.floor(centerBiasedRandom() * availableCols);
+        var row = minRow + Math.floor(centerBiasedRandom() * availableRows);
+
+        // Check if space is available
+        var canPlace = true;
+        for (var r = row; r < row + height && canPlace; r++) {
+          for (var c = col; c < col + width && canPlace; c++) {
+            if (r >= rows || c >= cols || occupied[r][c]) canPlace = false;
+          }
+        }
+
+        if (canPlace) {
+          // Mark as occupied
+          for (var r = row; r < row + height; r++) {
+            for (var c = col; c < col + width; c++) {
+              occupied[r][c] = true;
+            }
+          }
+
+          return {
+            col: col,
+            row: row,
+            colSpan: width,
+            rowSpan: height,
+            left: gridOffsetX + col * cellSize,
+            top: gridOffsetY + row * cellSize,
+            width: width * cellSize,
+            height: height * cellSize
+          };
+        }
+      }
+      return null;
+    }
+
+    function render() {
+      // Grid fills entire viewport
+      container.style.width = '100vw';
+      container.style.height = '100vh';
+      container.style.left = '0';
+      container.style.top = '0';
+
+      guidesContainer.innerHTML = '';
+
+      blocks.forEach(function(block, index) {
+        var blockEl = document.createElement('div');
+        blockEl.className = 'grid-block';
+        // Apply gutter: shrink block by half gutter on each side
+        var halfGutter = GUTTER / 2;
+        blockEl.style.left = (block.left + halfGutter) + 'px';
+        blockEl.style.top = (block.top + halfGutter) + 'px';
+        blockEl.style.width = (block.width - GUTTER) + 'px';
+        blockEl.style.height = (block.height - GUTTER) + 'px';
+        blockEl.dataset.index = String(index);
+
+        // Click handler for bounce animation
+        blockEl.addEventListener('click', function(e) {
+          var el = e.currentTarget;
+          el.classList.remove('clicking');
+          // Force reflow to restart animation
+          void el.offsetWidth;
+          el.classList.add('clicking');
+          setTimeout(function() {
+            el.classList.remove('clicking');
+          }, 250);
+        });
+
+        guidesContainer.appendChild(blockEl);
+      });
+    }
+
+    function animateIn() {
+      var blockEls = guidesContainer.querySelectorAll('.grid-block');
+
+      blockEls.forEach(function(block, index) {
+        setTimeout(function() {
+          block.classList.add('visible');
+
+          setTimeout(function() {
+            addGuidesForBlock(blocks[index]);
+          }, 300);
+        }, 150 + index * 120);
+      });
+
+    }
+
+    function addGuidesForBlock(block) {
+      var halfGutter = GUTTER / 2;
+      var actualLeft = block.left + halfGutter;
+      var actualTop = block.top + halfGutter;
+      var actualRight = block.left + block.width - halfGutter;
+      var actualBottom = block.top + block.height - halfGutter;
+
+      var topGuide = document.createElement('div');
+      topGuide.className = 'guide-line horizontal';
+      topGuide.style.top = actualTop + 'px';
+      guidesContainer.appendChild(topGuide);
+
+      var bottomGuide = document.createElement('div');
+      bottomGuide.className = 'guide-line horizontal';
+      bottomGuide.style.top = actualBottom + 'px';
+      guidesContainer.appendChild(bottomGuide);
+
+      var leftGuide = document.createElement('div');
+      leftGuide.className = 'guide-line vertical';
+      leftGuide.style.left = actualLeft + 'px';
+      guidesContainer.appendChild(leftGuide);
+
+      var rightGuide = document.createElement('div');
+      rightGuide.className = 'guide-line vertical';
+      rightGuide.style.left = actualRight + 'px';
+      guidesContainer.appendChild(rightGuide);
+
+      requestAnimationFrame(function() {
+        topGuide.classList.add('visible');
+        bottomGuide.classList.add('visible');
+        leftGuide.classList.add('visible');
+        rightGuide.classList.add('visible');
+      });
+
+    }
+
+    function blocksOverlapVertically(a, b) {
+      return !(a.top + a.height <= b.top || b.top + b.height <= a.top);
+    }
+
+    function blocksOverlapHorizontally(a, b) {
+      return !(a.left + a.width <= b.left || b.left + b.width <= a.left);
+    }
+
+    function getHorizontalGap(a, b) {
+      var overlapTop = Math.max(a.top, b.top);
+      var overlapBottom = Math.min(a.top + a.height, b.top + b.height);
+
+      if (a.left + a.width <= b.left) {
+        return {
+          left: a.left + a.width,
+          top: overlapTop,
+          width: b.left - (a.left + a.width),
+          height: overlapBottom - overlapTop
+        };
+      } else if (b.left + b.width <= a.left) {
+        return {
+          left: b.left + b.width,
+          top: overlapTop,
+          width: a.left - (b.left + b.width),
+          height: overlapBottom - overlapTop
+        };
+      }
+      return null;
+    }
+
+    function getVerticalGap(a, b) {
+      var overlapLeft = Math.max(a.left, b.left);
+      var overlapRight = Math.min(a.left + a.width, b.left + b.width);
+
+      if (a.top + a.height <= b.top) {
+        return {
+          left: overlapLeft,
+          top: a.top + a.height,
+          width: overlapRight - overlapLeft,
+          height: b.top - (a.top + a.height)
+        };
+      } else if (b.top + b.height <= a.top) {
+        return {
+          left: overlapLeft,
+          top: b.top + b.height,
+          width: overlapRight - overlapLeft,
+          height: a.top - (b.top + b.height)
+        };
+      }
+      return null;
+    }
+
+    // Initialize
+    calculateGrid();
+    generateRandomLayout();
+    render();
+    animateIn();
+
+    // Handle resize
+    window.addEventListener('resize', function() {
+      calculateGrid();
+      blocks.forEach(function(block) {
+        block.left = gridOffsetX + block.col * cellSize;
+        block.top = gridOffsetY + block.row * cellSize;
+        block.width = block.colSpan * cellSize;
+        block.height = block.rowSpan * cellSize;
+      });
+      render();
+      animateIn();
+    });
+  })();
+</script>
