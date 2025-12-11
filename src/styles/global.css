@@ -12,6 +12,15 @@
   --color-text-muted: #525252;
   --color-accent: #3b82f6;
   --color-accent-hover: #60a5fa;
+
+  /* Wireframe / Redlining colors */
+  --color-grid-line: rgba(255, 255, 255, 0.12);
+  --color-grid-line-accent: rgba(255, 255, 255, 0.25);
+  --color-guide-h: rgba(255, 87, 87, 0.7);
+  --color-guide-v: rgba(87, 166, 255, 0.7);
+  --color-spacing-box: rgba(139, 92, 246, 0.15);
+  --color-block-fill: rgba(255, 255, 255, 0.95);
+  --color-block-stroke: rgba(255, 255, 255, 0.3);
 }
 
 html {
