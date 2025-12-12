@@ -16,14 +16,17 @@ Alpha is a dynamic portfolio website built with modern web technologies. The pro
 
 ## Commands
 
+<!-- auto-generated: commands -->
 ```bash
 npm run dev      # Start development server (port 4321)
 npm run build    # Build for production
 npm run preview  # Preview production build
 ```
+<!-- end auto-generated: commands -->
 
 ## Project Structure
 
+<!-- auto-generated: project-structure -->
 ```
 src/
 ├── content/
@@ -32,6 +35,7 @@ src/
 │           ├── index.md    # Project content (markdown + frontmatter)
 │           └── media/      # Project-specific assets (images, videos)
 ├── components/
+│   ├── BottomSheet.astro   # Slide-up info panel with toggle
 │   ├── Card.astro          # Interactive card with optional link
 │   ├── Container.astro     # Max-width centered container (max-w-5xl)
 │   ├── Hero.astro          # Landing page: animated block grid + project links
@@ -39,13 +43,14 @@ src/
 ├── layouts/
 │   └── Base.astro          # HTML document wrapper
 ├── pages/
-│   ├── index.astro         # Homepage (Hero)
+│   ├── index.astro         # Homepage (Hero + BottomSheet)
 │   └── projects/
 │       └── [...slug].astro # Dynamic project pages from content collection
 ├── styles/
 │   └── global.css          # Design tokens & base styles
 └── content.config.ts       # Content collection schema
 ```
+<!-- end auto-generated: project-structure -->
 
 ## Content Collection: Projects
 
@@ -94,6 +99,7 @@ Your markdown content here...
 
 ### Color Tokens (defined in global.css @theme)
 
+<!-- auto-generated: design-tokens -->
 | Token | Value | Usage |
 |-------|-------|-------|
 | `--color-surface` | `#0a0a0a` | Page background |
@@ -113,6 +119,7 @@ Your markdown content here...
 | `--color-guide-v` | Vertical alignment guides (blue) |
 | `--color-block-fill` | Grid block fill (white) |
 | `--color-block-stroke` | Grid block borders |
+<!-- end auto-generated: design-tokens -->
 
 ### Typography
 
@@ -201,26 +208,8 @@ Use Astro's class:list for conditional classes:
 
 Card component renders as `<a>` when href is provided, `<div>` otherwise.
 
-## Session Startup
-
-When the user asks to "rev up", "run the project", "start the app", "spin it up", or similar:
-
-1. Run `npm install` (ensures dependencies are current)
-2. Run `npm run dev` in background (starts dev server on port 4321)
-
-Do not auto-start the dev server on session start - wait for explicit request.
-
-## Git Workflow
-
-- Branch naming: descriptive kebab-case (e.g., `happy-pasteur`, `peaceful-swirles`)
-- Commit style: Conventional commits (`feat:`, `fix:`, `chore:`, `docs:`)
-- Commit bodies should include bullet points describing changes
-- Merge commits summarize the branch's purpose
-
 ## Development Guidelines
 
-- Prefer editing existing files over creating new ones
-- Keep components focused and reusable
 - Use CSS custom properties for theming (not hardcoded values)
 - Client-side scripts use ES module `<script>` tags (not `is:inline`) for imports
 - Use Motion One for JavaScript-driven animations, CSS transitions for simple hover states
