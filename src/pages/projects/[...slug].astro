@@ -1,0 +1,118 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects', ({ data }) => !data.draft);
+  return projects.map((project) => ({
+    params: { slug: project.id },
+    props: { project },
+  }));
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+---
+
+<Base title={project.data.title} description={project.data.description}>
+  <main class="project-page">
+    <a href="/" class="back-link">&larr; Back</a>
+    <article>
+      <header>
+        <h1>{project.data.title}</h1>
+        {project.data.description && <p class="description">{project.data.description}</p>}
+        {project.data.tags && (
+          <div class="tags">
+            {project.data.tags.map((tag: string) => (
+              <span class="tag">{tag}</span>
+            ))}
+          </div>
+        )}
+      </header>
+      <div class="content">
+        <Content />
+      </div>
+    </article>
+  </main>
+</Base>
+
+<style>
+  .project-page {
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 2rem;
+    min-height: 100vh;
+  }
+
+  .back-link {
+    display: inline-block;
+    color: var(--color-text-primary);
+    opacity: 0.6;
+    text-decoration: none;
+    margin-bottom: 2rem;
+    transition: opacity 0.2s;
+  }
+
+  .back-link:hover {
+    opacity: 1;
+  }
+
+  article header {
+    margin-bottom: 3rem;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--color-text-primary);
+  }
+
+  .description {
+    font-size: 1.25rem;
+    color: var(--color-text-primary);
+    opacity: 0.7;
+    margin-bottom: 1rem;
+  }
+
+  .tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    background: var(--color-surface-elevated);
+    border-radius: 9999px;
+    color: var(--color-text-primary);
+    opacity: 0.8;
+  }
+
+  .content {
+    color: var(--color-text-primary);
+    line-height: 1.7;
+  }
+
+  .content :global(h2) {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .content :global(p) {
+    margin-bottom: 1rem;
+  }
+
+  .content :global(img) {
+    max-width: 100%;
+    border-radius: 0.5rem;
+    margin: 1.5rem 0;
+  }
+
+  .content :global(a) {
+    color: var(--color-accent);
+  }
+</style>

@@ -1,5 +1,7 @@
 # CLAUDE.md - Alpha Portfolio
 
+> **Global Rules**: See `~/.config/claude/RULES.md` for cross-project preferences and guidelines.
+
 ## Project Overview
 
 Alpha is a dynamic portfolio website built with modern web technologies. The project features an interactive grid-based visual design with animated blocks and alignment guides, serving as a creative portfolio experience.
@@ -15,7 +17,7 @@ Alpha is a dynamic portfolio website built with modern web technologies. The pro
 ## Commands
 
 ```bash
-npm run dev      # Start development server
+npm run dev      # Start development server (port 4321)
 npm run build    # Build for production
 npm run preview  # Preview production build
 ```
@@ -24,18 +26,69 @@ npm run preview  # Preview production build
 
 ```
 src/
-├── components/     # Reusable Astro components
-│   ├── Card.astro        # Interactive card with optional link
-│   ├── Container.astro   # Max-width centered container (max-w-5xl)
-│   ├── GridFacade.astro  # Main visual: animated grid blocks
-│   └── Section.astro     # Page section wrapper (py-16/24)
+├── content/
+│   └── projects/           # Content collection for projects
+│       └── {project-slug}/
+│           ├── index.md    # Project content (markdown + frontmatter)
+│           └── media/      # Project-specific assets (images, videos)
+├── components/
+│   ├── Card.astro          # Interactive card with optional link
+│   ├── Container.astro     # Max-width centered container (max-w-5xl)
+│   ├── Hero.astro          # Landing page: animated block grid + project links
+│   └── Section.astro       # Page section wrapper (py-16/24)
 ├── layouts/
-│   └── Base.astro        # HTML document wrapper
+│   └── Base.astro          # HTML document wrapper
 ├── pages/
-│   └── index.astro       # Homepage
-└── styles/
-    └── global.css        # Design tokens & base styles
+│   ├── index.astro         # Homepage (Hero)
+│   └── projects/
+│       └── [...slug].astro # Dynamic project pages from content collection
+├── styles/
+│   └── global.css          # Design tokens & base styles
+└── content.config.ts       # Content collection schema
 ```
+
+## Content Collection: Projects
+
+### Adding a New Project
+
+1. Create a folder under `src/content/projects/` with your project slug
+2. Add an `index.md` file with frontmatter:
+
+```md
+---
+title: Project Title
+description: Brief description
+tags: [tag1, tag2]
+date: 2024-01-15
+draft: false
+---
+
+Your markdown content here...
+```
+
+3. Add media to the `media/` subfolder and reference with relative paths:
+
+```md
+![Screenshot](./media/screenshot.png)
+```
+
+### Frontmatter Schema
+
+| Field       | Type       | Required | Description                    |
+|-------------|------------|----------|--------------------------------|
+| title       | string     | Yes      | Project title                  |
+| description | string     | Yes      | Brief description              |
+| cover       | image      | No       | Cover image path               |
+| date        | date       | No       | Project date                   |
+| tags        | string[]   | No       | Tags for categorization        |
+| draft       | boolean    | No       | If true, excluded from build   |
+
+### How It Works
+
+- `content.config.ts` defines the schema with Zod validation
+- `Hero.astro` fetches projects and renders clickable blocks
+- `pages/projects/[...slug].astro` generates pages from content
+- Blocks link to `/projects/{slug}`
 
 ## Design System
 
@@ -72,30 +125,53 @@ src/
 - **Container padding**: px-6 (24px)
 - **Section padding**: py-16 (mobile) / py-24 (desktop)
 
-## GridFacade Component
+## Hero Component
 
-The main visual element of the portfolio. Key characteristics:
+The landing page composition. Key characteristics:
 
-- **Layout**: 7 randomly placed blocks clustered toward center
+- **Layout**: 5 blocks clustered toward center, linking to project pages
 - **Grid**: Dynamic 12x12 base, responsive cell sizing (64-96px based on viewport)
-- **Placement**: Center-biased random algorithm (middle 50% of grid)
+- **Placement**: Center-weighted seeded random (middle 50% of grid)
 - **Block sizes**: 1-3 cells wide/tall (square or rectangular)
 - **Gutters**: 24px between blocks
+- **Links**: Each block links to its corresponding project page
+
+### Session-Stable Layouts
+
+The block arrangement is **deterministic per session** using a seeded PRNG:
+
+- **Same session = same layout**: Navigating to a project and back preserves spatial memory
+- **New session = fresh layout**: New tab, browser restart, or different visitor gets a unique arrangement
+- **Storage**: Seed stored in `sessionStorage` under key `hero:seed`
+- **Algorithm**: Linear congruential generator (LCG)
+
+This ensures each visitor experiences a consistent layout throughout their browsing session, while still providing visual variety across different visitors and sessions.
+
+### Function Reference
+
+| Function | Purpose |
+|----------|---------|
+| `measureGrid()` | Calculate grid dimensions from viewport |
+| `arrangeBlocks()` | Place blocks using seeded randomness |
+| `placeBlock()` | Attempt to place a single block |
+| `weightedCenter()` | Bias random values toward center |
+| `render()` | Create DOM elements for blocks |
+| `drawGuides()` | Add alignment guide lines |
+| `revealBlocks()` | Animate blocks into view |
+| `handleResize()` | Debounced viewport change handler |
 
 ### Animations (Motion One)
 
-Animations are handled via Motion One's `animate` and `stagger` functions:
-
 - **Entry**: Scale + opacity from 0, staggered 120ms, spring easing `[0.34, 1.56, 0.64, 1]`
-- **Hover**: CSS scale to 1.03 (not Motion)
-- **Click**: Motion animate `scale: [1, 0.92, 1]` over 250ms
+- **Hover**: CSS scale to 1.03
+- **Click**: Motion animate `scale: [1, 0.92, 1]` over 200ms, then navigate
 - **Guides**: Fade in via CSS transition 300ms after block appears
-- **Resize**: Debounced (150ms) full layout regeneration
+- **Resize**: Debounced (150ms) re-arrangement (uses same seed)
 
 ### Alignment Guides
 
 - Red lines appear flush with block edges (top, bottom, left, right)
-- Gradient fade at edges for visual polish
+- Fully opaque across viewport
 - Non-interactive (pointer-events: none)
 
 ## Component Patterns
@@ -131,16 +207,6 @@ Card component renders as `<a>` when href is provided, `<div>` otherwise.
 - Commit style: Conventional commits (`feat:`, `fix:`, `chore:`, `docs:`)
 - Commit bodies should include bullet points describing changes
 - Merge commits summarize the branch's purpose
-
-## Evolution Notes
-
-The project has gone through several iterations:
-
-1. **Initial**: Basic setup
-2. **Maintenance page**: Dark theme, centered layout, status cards
-3. **Astro migration**: Component architecture, Catppuccin theme (since replaced)
-4. **Clean slate**: Rebuild with GridFacade as hero visual (vanilla JS animations)
-5. **Current**: Motion One integration, TypeScript ES modules, simplified CSS
 
 ## Development Guidelines
 
