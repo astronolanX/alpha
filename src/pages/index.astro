@@ -1,8 +1,23 @@
 ---
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
+import BottomSheet from '../components/BottomSheet.astro';
 ---
 
 <Base title="Alpha" description="A dynamic portfolio experience">
   <Hero />
+  <BottomSheet>
+    <div class="max-w-5xl mx-auto flex flex-col md:flex-row md:justify-between gap-6 text-sm">
+      <div class="space-y-1">
+        <p class="text-text-primary font-medium">Nolan Figueroa</p>
+        <p class="text-text-secondary">I bridge design and engineering to solve messy problems.</p>
+        <p class="text-text-muted">BFA Communication Design, Texas State University</p>
+      </div>
+      <div class="flex flex-wrap gap-x-4 gap-y-1 text-text-secondary">
+        <a href="mailto:hello@astronolan.com" class="hover:text-text-primary transition-colors">hello@astronolan.com</a>
+        <a href="https://linkedin.com/in/astronolan" class="hover:text-text-primary transition-colors">LinkedIn</a>
+        <a href="https://www.astronolan.com" class="hover:text-text-primary transition-colors">astronolan.com</a>
+      </div>
+    </div>
+  </BottomSheet>
 </Base>
