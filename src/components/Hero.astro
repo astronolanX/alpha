@@ -1,0 +1,311 @@
+---
+// Hero.astro - Landing page composition with animated block grid
+import { getCollection } from 'astro:content';
+
+const projects = await getCollection('projects', ({ data }) => !data.draft);
+const projectData = projects.map((p) => ({
+  id: p.id,
+  title: p.data.title,
+  href: `/projects/${p.id}`,
+}));
+---
+
+<div class="hero" id="hero" data-projects={JSON.stringify(projectData)}>
+  <div class="hero-background" id="heroBackground">&nbsp;</div>
+  <div class="hero-canvas" id="heroCanvas">&nbsp;</div>
+</div>
+
+<style is:global>
+  .hero {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: var(--color-surface);
+  }
+
+  .hero-background {
+    position: absolute;
+    background-color: var(--color-surface);
+  }
+
+  .hero-canvas {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .block {
+    position: absolute;
+    background-color: #ffffff;
+    cursor: pointer;
+    pointer-events: auto;
+    z-index: 2;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+    padding: 1rem;
+    text-decoration: none;
+    box-sizing: border-box;
+  }
+
+  .block:hover {
+    transform: scale(1.03);
+    transition: transform 0.2s ease-out;
+  }
+
+  .guide {
+    position: absolute;
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+    z-index: 1;
+  }
+
+  .guide.visible {
+    opacity: 1;
+  }
+
+  .guide.horizontal {
+    height: 1px;
+    left: 0;
+    right: 0;
+    background-color: var(--color-guide-h);
+  }
+
+  .guide.vertical {
+    width: 1px;
+    top: 0;
+    bottom: 0;
+    background-color: var(--color-guide-h);
+  }
+</style>
+
+<script>
+  import { animate, stagger } from 'motion';
+
+  const hero = document.getElementById('hero')!;
+  const background = document.getElementById('heroBackground')!;
+  const canvas = document.getElementById('heroCanvas')!;
+
+  // Session-stable layouts via seeded PRNG
+  // Each visitor gets a unique seed stored in sessionStorage
+  // Same session = same layout (preserves spatial memory when navigating back)
+  // New session = fresh layout (new tab, browser restart, different visitor)
+  const LAYOUT_KEY = 'hero:seed';
+  let seedValue = sessionStorage.getItem(LAYOUT_KEY);
+  if (!seedValue) {
+    seedValue = String(Date.now());
+    sessionStorage.setItem(LAYOUT_KEY, seedValue);
+  }
+  let seed = parseInt(seedValue, 10);
+
+  function random(): number {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    return seed / 0x7fffffff;
+  }
+
+  interface Project {
+    id: string;
+    title: string;
+    href: string;
+  }
+
+  const projects: Project[] = JSON.parse(hero.dataset.projects || '[]');
+  const NUM_BLOCKS = 5; // Fixed count regardless of project count
+  const GUTTER = 24; // Spacing between blocks (px)
+
+  interface Block {
+    col: number;
+    row: number;
+    colSpan: number;
+    rowSpan: number;
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+    project?: Project;
+  }
+
+  let blocks: Block[] = [];
+  let cols = 12;
+  let rows = 12;
+  let cellSize = 0;
+
+  function measureGrid() {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const targetCellSize = Math.min(vw, vh) < 640 ? 64 : Math.min(vw, vh) < 1024 ? 80 : 96;
+
+    cols = Math.ceil(vw / targetCellSize);
+    rows = Math.ceil(vh / targetCellSize);
+    cellSize = Math.max(vw / cols, vh / rows);
+    cols = Math.ceil(vw / cellSize);
+    rows = Math.ceil(vh / cellSize);
+  }
+
+  // Bias placement toward center using average of two random values
+  function weightedCenter(): number {
+    return (random() + random()) / 2;
+  }
+
+  const layoutSeed = seed;
+
+  function arrangeBlocks() {
+    // Reset to layout seed for deterministic arrangement
+    seed = layoutSeed;
+    blocks = [];
+    const occupied: boolean[][] = Array.from({ length: rows }, () => Array(cols).fill(false));
+
+    const colMargin = Math.floor(cols * 0.25);
+    const rowMargin = Math.floor(rows * 0.25);
+
+    for (let i = 0; i < NUM_BLOCKS; i++) {
+      const block = placeBlock(occupied, colMargin, cols - colMargin, rowMargin, rows - rowMargin);
+      if (block) {
+        block.project = projects[0];
+        blocks.push(block);
+      }
+    }
+  }
+
+  function placeBlock(occupied: boolean[][], minCol: number, maxCol: number, minRow: number, maxRow: number): Block | null {
+    for (let attempt = 0; attempt < 100; attempt++) {
+      const width = 1 + Math.floor(random() * 3);
+      const height = 1 + Math.floor(random() * 3);
+
+      const availableCols = maxCol - minCol - width + 1;
+      const availableRows = maxRow - minRow - height + 1;
+      if (availableCols <= 0 || availableRows <= 0) continue;
+
+      const col = minCol + Math.floor(weightedCenter() * availableCols);
+      const row = minRow + Math.floor(weightedCenter() * availableRows);
+
+      let canPlace = true;
+      for (let r = row; r < row + height && canPlace; r++) {
+        for (let c = col; c < col + width && canPlace; c++) {
+          if (r >= rows || c >= cols || occupied[r][c]) canPlace = false;
+        }
+      }
+
+      if (canPlace) {
+        for (let r = row; r < row + height; r++) {
+          for (let c = col; c < col + width; c++) {
+            occupied[r][c] = true;
+          }
+        }
+        return {
+          col,
+          row,
+          colSpan: width,
+          rowSpan: height,
+          left: col * cellSize,
+          top: row * cellSize,
+          width: width * cellSize,
+          height: height * cellSize,
+        };
+      }
+    }
+    return null;
+  }
+
+  function render() {
+    background.style.width = '100vw';
+    background.style.height = '100vh';
+    background.style.left = '0';
+    background.style.top = '0';
+
+    canvas.innerHTML = '';
+    const half = GUTTER / 2;
+
+    blocks.forEach((block, index) => {
+      const el = block.project
+        ? document.createElement('a')
+        : document.createElement('div');
+
+      el.className = 'block';
+      el.style.left = `${block.left + half}px`;
+      el.style.top = `${block.top + half}px`;
+      el.style.width = `${block.width - GUTTER}px`;
+      el.style.height = `${block.height - GUTTER}px`;
+      el.dataset.index = String(index);
+
+      if (block.project) {
+        (el as HTMLAnchorElement).href = block.project.href;
+      }
+
+      el.addEventListener('click', (e) => {
+        if (block.project) {
+          e.preventDefault();
+          animate(el, { scale: [1, 0.92, 1] }, { duration: 0.2 }).then(() => {
+            window.location.href = block.project!.href;
+          });
+        } else {
+          animate(el, { scale: [1, 0.92, 1] }, { duration: 0.25 });
+        }
+      });
+
+      canvas.appendChild(el);
+    });
+  }
+
+  function drawGuides(block: Block) {
+    const half = GUTTER / 2;
+    const left = block.left + half;
+    const top = block.top + half;
+    const right = block.left + block.width - half;
+    const bottom = block.top + block.height - half;
+
+    const guides = [
+      { className: 'guide horizontal', style: `top: ${top}px` },
+      { className: 'guide horizontal', style: `top: ${bottom}px` },
+      { className: 'guide vertical', style: `left: ${left}px` },
+      { className: 'guide vertical', style: `left: ${right}px` },
+    ];
+
+    guides.forEach(({ className, style }) => {
+      const guide = document.createElement('div');
+      guide.className = className;
+      guide.style.cssText = style;
+      canvas.appendChild(guide);
+      requestAnimationFrame(() => guide.classList.add('visible'));
+    });
+  }
+
+  function revealBlocks() {
+    const blockEls = canvas.querySelectorAll('.block');
+
+    animate(
+      blockEls,
+      { opacity: [0, 1], scale: [0, 1] },
+      { duration: 0.5, delay: stagger(0.12), easing: [0.34, 1.56, 0.64, 1] }
+    );
+
+    // Draw guides after blocks appear
+    blockEls.forEach((_, index) => {
+      setTimeout(() => drawGuides(blocks[index]), 150 + index * 120 + 300);
+    });
+  }
+
+  function init() {
+    measureGrid();
+    arrangeBlocks();
+    render();
+    revealBlocks();
+  }
+
+  let resizeTimeout: number;
+
+  function handleResize() {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      measureGrid();
+      arrangeBlocks();
+      render();
+      revealBlocks();
+    }, 150);
+  }
+
+  init();
+  window.addEventListener('resize', handleResize);
+</script>
