@@ -201,6 +201,15 @@ Use Astro's class:list for conditional classes:
 
 Card component renders as `<a>` when href is provided, `<div>` otherwise.
 
+## Session Startup
+
+When the user asks to "rev up", "run the project", "start the app", "spin it up", or similar:
+
+1. Run `npm install` (ensures dependencies are current)
+2. Run `npm run dev` in background (starts dev server on port 4321)
+
+Do not auto-start the dev server on session start - wait for explicit request.
+
 ## Git Workflow
 
 - Branch naming: descriptive kebab-case (e.g., `happy-pasteur`, `peaceful-swirles`)
