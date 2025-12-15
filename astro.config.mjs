@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://alpha.dev',
+  site: 'https://astronolan.com',
   server: {
     port: 4321
   },

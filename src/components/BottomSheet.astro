@@ -70,12 +70,30 @@ const { class: className = '' } = Astro.props;
 </style>
 
 <script>
-  const sheet = document.querySelector('.bottom-sheet') as HTMLElement;
-  const toggle = sheet?.querySelector('.toggle') as HTMLButtonElement;
+  function initBottomSheet() {
+    const sheet = document.querySelector('.bottom-sheet') as HTMLElement;
+    if (!sheet) return;
 
-  toggle?.addEventListener('click', () => {
-    const isOpen = sheet.dataset.open === 'true';
-    sheet.dataset.open = String(!isOpen);
-    toggle.setAttribute('aria-expanded', String(!isOpen));
-  });
+    const toggle = sheet.querySelector('.toggle') as HTMLButtonElement;
+
+    function setOpen(open: boolean) {
+      sheet.dataset.open = String(open);
+      toggle.setAttribute('aria-expanded', String(open));
+    }
+
+    toggle?.addEventListener('click', () => {
+      const isOpen = sheet.dataset.open === 'true';
+      setOpen(!isOpen);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && sheet.dataset.open === 'true') {
+        setOpen(false);
+      }
+    });
+  }
+
+  // Run on initial load and View Transitions navigation
+  initBottomSheet();
+  document.addEventListener('astro:page-load', initBottomSheet);
 </script>

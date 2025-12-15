@@ -1,9 +1,11 @@
 ---
+import { ClientRouter } from 'astro:transitions';
 import '../styles/global.css';
 
 interface Props {
   title?: string;
   description?: string;
+  image?: string;
 }
 
 const SITE = {
@@ -16,8 +18,11 @@ const SITE = {
 
 const {
   title,
-  description = SITE.description
+  description = SITE.description,
+  image = '/og-image.svg'
 } = Astro.props;
+
+const ogImageUrl = new URL(image, SITE.url).href;
 
 const pageTitle = title ? `${title} | ${SITE.name}` : SITE.name;
 const canonicalUrl = new URL(Astro.url.pathname, SITE.url).href;
@@ -44,17 +49,28 @@ const canonicalUrl = new URL(Astro.url.pathname, SITE.url).href;
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:image" content={ogImageUrl} />
 
     <!-- Twitter -->
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content={canonicalUrl} />
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    <!-- RSS -->
+    <link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <ClientRouter />
   </head>
   <body>
     <slot />
+
+    <!-- Cloudflare Web Analytics -->
+    <!-- Get your beacon token from: https://dash.cloudflare.com/?to=/:account/web-analytics -->
+    <!-- <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "YOUR_TOKEN_HERE"}'></script> -->
   </body>
 </html>
