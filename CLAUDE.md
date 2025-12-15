@@ -2,6 +2,18 @@
 
 > **Global Rules**: See `~/.config/claude/RULES.md` for cross-project preferences and guidelines.
 
+## README Voice & Philosophy
+
+The README is a personal artifact, not a product pitch. When updating it:
+
+- **Show, don't sell** — Describe what the site does and how it works. Let the craft speak for itself.
+- **Stay grounded** — Write as someone building in public, learning and iterating. Avoid superlatives and marketing language.
+- **Be specific** — Concrete details (session-stable layouts, seeded PRNG, alignment guides) are more compelling than adjectives.
+- **Keep it lean** — A few well-chosen sentences beat comprehensive documentation. This isn't a template for others to fork.
+- **Evolve naturally** — The README grows with the project. New sections earn their place through substance, not structure.
+
+The goal: someone reading should understand what this is, sense the care behind it, and move on curious—not convinced.
+
 ## Project Overview
 
 Alpha is a dynamic portfolio website built with modern web technologies. The project features an interactive grid-based visual design with animated blocks and alignment guides, serving as a creative portfolio experience.
