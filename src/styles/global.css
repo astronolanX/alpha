@@ -1,26 +1,40 @@
 @import "tailwindcss";
 
 @theme {
+  /* Typography - Elegant pairing: Instrument Serif (display) + Inter (body) */
+  --font-display: 'Instrument Serif', 'Georgia', serif;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-  --color-surface: #0a0a0a;
-  --color-surface-elevated: #141414;
-  --color-surface-accent: #1a1a1a;
-  --color-text-primary: #fafafa;
-  --color-text-secondary: #a1a1a1;
-  --color-text-muted: #525252;
-  --color-accent: #3b82f6;
-  --color-accent-hover: #60a5fa;
+  /* Light theme surfaces */
+  --color-surface: #fafafa;
+  --color-surface-elevated: #ffffff;
+  --color-surface-accent: #f0f0f0;
 
-  /* Wireframe / Redlining colors */
-  --color-grid-line: rgba(255, 255, 255, 0.12);
-  --color-grid-line-accent: rgba(255, 255, 255, 0.25);
-  --color-guide-h: rgba(255, 87, 87, 0.7);
-  --color-guide-v: rgba(87, 166, 255, 0.7);
-  --color-spacing-box: rgba(139, 92, 246, 0.15);
-  --color-block-fill: rgba(255, 255, 255, 0.95);
-  --color-block-stroke: rgba(255, 255, 255, 0.3);
+  /* Dark text on light */
+  --color-text-primary: #0a0a0a;
+  --color-text-secondary: #525252;
+  --color-text-muted: #a1a1a1;
+
+  /* Accent colors */
+  --color-accent: #3b82f6;
+  --color-accent-hover: #2563eb;
+
+  /* Design canvas guide colors - vibrant and visible */
+  --color-guide-cyan: rgba(0, 200, 255, 0.85);
+  --color-guide-magenta: rgba(236, 72, 153, 0.85);
+  --color-guide-orange: rgba(249, 115, 22, 0.75);
+  --color-guide-grid: rgba(0, 0, 0, 0.08);
+  --color-guide-grid-accent: rgba(0, 0, 0, 0.15);
+
+  /* Legacy guide tokens (mapped for compatibility) */
+  --color-grid-line: var(--color-guide-grid);
+  --color-grid-line-accent: var(--color-guide-grid-accent);
+  --color-guide-h: var(--color-guide-magenta);
+  --color-guide-v: var(--color-guide-cyan);
+  --color-spacing-box: rgba(139, 92, 246, 0.12);
+  --color-block-fill: rgba(0, 0, 0, 0.03);
+  --color-block-stroke: rgba(0, 0, 0, 0.1);
 }
 
 html {

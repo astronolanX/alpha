@@ -1,0 +1,389 @@
+---
+// DesignCanvas.astro - Generative Bauhaus/Constructivist composition
+// Session-stable: each visitor sees a unique but consistent arrangement
+
+interface Props {
+  class?: string;
+}
+
+const { class: className = '' } = Astro.props;
+---
+
+<div class:list={['design-canvas', className]} id="designCanvas">
+  <svg class="canvas-svg" id="canvasSvg" preserveAspectRatio="xMidYMid meet"></svg>
+
+  <!-- Content layer -->
+  <div class="canvas-content" id="canvasContent">
+    <header class="content-header" id="contentHeader">
+      <span>Design Systems</span>
+      <span class="sep">/</span>
+      <span>UX Engineering</span>
+    </header>
+
+    <footer class="content-footer" id="contentFooter">
+      <div class="footer-name">Nolan Figueroa</div>
+      <div class="footer-meta">
+        <span>San Francisco</span>
+        <span class="sep">&mdash;</span>
+        <span>astronolan.com</span>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<style is:global>
+  .design-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: var(--color-surface);
+  }
+
+  .canvas-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Content layer */
+  .canvas-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 6vh 6vw;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .content-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .content-header.visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  .content-header .sep {
+    color: var(--color-text-muted);
+  }
+
+  .content-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .content-footer.visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  .footer-name {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-style: italic;
+    color: var(--color-text-primary);
+    line-height: 1;
+  }
+
+  .footer-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--color-text-muted);
+    letter-spacing: 0.02em;
+  }
+
+  .footer-meta .sep {
+    opacity: 0.5;
+  }
+
+  @media (max-width: 768px) {
+    .canvas-content {
+      padding: 4vh 5vw;
+    }
+  }
+</style>
+
+<script>
+  function initDesignCanvas() {
+    const canvas = document.getElementById('designCanvas');
+    const svg = document.getElementById('canvasSvg') as SVGSVGElement | null;
+    const contentHeader = document.getElementById('contentHeader');
+    const contentFooter = document.getElementById('contentFooter');
+
+    if (!canvas || !svg) return;
+
+    // Session-stable seed
+    const SEED_KEY = 'composition:seed';
+    let seedValue = sessionStorage.getItem(SEED_KEY);
+    if (!seedValue) {
+      seedValue = String(Date.now());
+      sessionStorage.setItem(SEED_KEY, seedValue);
+    }
+    let seed = parseInt(seedValue, 10);
+
+    // Seeded PRNG (LCG)
+    function random(): number {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      return seed / 0x7fffffff;
+    }
+
+    function randomRange(min: number, max: number): number {
+      return min + random() * (max - min);
+    }
+
+    function randomInt(min: number, max: number): number {
+      return Math.floor(randomRange(min, max + 1));
+    }
+
+    function pick<T>(arr: T[]): T {
+      return arr[Math.floor(random() * arr.length)];
+    }
+
+    // Color palette - Bauhaus inspired
+    const PALETTE = {
+      black: '#1a1a1a',
+      coral: '#f87171',
+      blue: '#3b82f6',
+      yellow: '#fbbf24',
+      blush: '#fecdd3',
+      navy: '#1e3a5a',
+      gray: '#475569',
+    };
+
+    const ACCENT_COLORS = [PALETTE.coral, PALETTE.blue, PALETTE.yellow, PALETTE.blush, PALETTE.navy];
+
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+
+    interface Shape {
+      type: 'rect' | 'circle' | 'line';
+      x: number;
+      y: number;
+      width?: number;
+      height?: number;
+      radius?: number;
+      x2?: number;
+      y2?: number;
+      rotation?: number;
+      fill?: string;
+      stroke?: string;
+      strokeWidth?: number;
+      opacity?: number;
+    }
+
+    function generateComposition(): Shape[] {
+      const shapes: Shape[] = [];
+      const centerX = width * 0.5;
+      const centerY = height * 0.45;
+      const baseSize = Math.min(width, height) * 0.35;
+
+      // Pick 2-3 accent colors for this composition
+      const shuffled = [...ACCENT_COLORS].sort(() => random() - 0.5);
+      const colors = shuffled.slice(0, randomInt(2, 3));
+
+      // Generate 4-7 shapes
+      const shapeCount = randomInt(4, 7);
+
+      for (let i = 0; i < shapeCount; i++) {
+        const shapeType = pick(['rect', 'rect', 'rect', 'circle', 'line']) as 'rect' | 'circle' | 'line';
+
+        // Position clustered around center
+        const offsetX = randomRange(-baseSize * 0.6, baseSize * 0.6);
+        const offsetY = randomRange(-baseSize * 0.6, baseSize * 0.6);
+        const x = centerX + offsetX;
+        const y = centerY + offsetY;
+
+        if (shapeType === 'rect') {
+          // Decide if filled or outline
+          const isOutline = random() < 0.25;
+          const isRotated = random() < 0.4;
+
+          // Rectangles: some tall/thin, some wide, some square-ish
+          const aspectType = pick(['tall', 'wide', 'square']);
+          let w: number, h: number;
+
+          if (aspectType === 'tall') {
+            w = randomRange(baseSize * 0.08, baseSize * 0.2);
+            h = randomRange(baseSize * 0.4, baseSize * 0.9);
+          } else if (aspectType === 'wide') {
+            w = randomRange(baseSize * 0.4, baseSize * 0.9);
+            h = randomRange(baseSize * 0.08, baseSize * 0.2);
+          } else {
+            const size = randomRange(baseSize * 0.15, baseSize * 0.4);
+            w = size;
+            h = size * randomRange(0.8, 1.2);
+          }
+
+          shapes.push({
+            type: 'rect',
+            x: x - w / 2,
+            y: y - h / 2,
+            width: w,
+            height: h,
+            rotation: isRotated ? randomRange(-35, 35) : 0,
+            fill: isOutline ? 'none' : pick([PALETTE.black, ...colors]),
+            stroke: isOutline ? pick([PALETTE.coral, PALETTE.black]) : 'none',
+            strokeWidth: isOutline ? 2 : 0,
+            opacity: random() < 0.2 ? 0.7 : 1,
+          });
+        } else if (shapeType === 'circle') {
+          const r = randomRange(baseSize * 0.06, baseSize * 0.18);
+          const isFilled = random() < 0.85;
+
+          shapes.push({
+            type: 'circle',
+            x,
+            y,
+            radius: r,
+            fill: isFilled ? pick([PALETTE.black, ...colors]) : 'none',
+            stroke: isFilled ? 'none' : PALETTE.black,
+            strokeWidth: isFilled ? 0 : 2,
+          });
+        } else {
+          // Line - thin diagonal or vertical/horizontal
+          const isThick = random() < 0.3;
+          const length = randomRange(baseSize * 0.4, baseSize * 1.2);
+          const angle = pick([0, 90, randomRange(-60, 60)]) * (Math.PI / 180);
+
+          shapes.push({
+            type: 'line',
+            x: x - (Math.cos(angle) * length) / 2,
+            y: y - (Math.sin(angle) * length) / 2,
+            x2: x + (Math.cos(angle) * length) / 2,
+            y2: y + (Math.sin(angle) * length) / 2,
+            stroke: pick([PALETTE.black, PALETTE.gray]),
+            strokeWidth: isThick ? randomRange(3, 6) : randomRange(1, 2),
+          });
+        }
+      }
+
+      // Sort by size (larger shapes behind) for better layering
+      shapes.sort((a, b) => {
+        const areaA = a.type === 'circle' ? Math.PI * (a.radius || 0) ** 2 : (a.width || 0) * (a.height || 0);
+        const areaB = b.type === 'circle' ? Math.PI * (b.radius || 0) ** 2 : (b.width || 0) * (b.height || 0);
+        return areaB - areaA;
+      });
+
+      return shapes;
+    }
+
+    function renderShapes(shapes: Shape[]) {
+      svg.innerHTML = '';
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+      shapes.forEach((shape, index) => {
+        let el: SVGElement;
+
+        if (shape.type === 'rect') {
+          el = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          el.setAttribute('x', String(shape.x));
+          el.setAttribute('y', String(shape.y));
+          el.setAttribute('width', String(shape.width));
+          el.setAttribute('height', String(shape.height));
+
+          if (shape.rotation) {
+            const cx = shape.x! + shape.width! / 2;
+            const cy = shape.y! + shape.height! / 2;
+            el.setAttribute('transform', `rotate(${shape.rotation} ${cx} ${cy})`);
+          }
+        } else if (shape.type === 'circle') {
+          el = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          el.setAttribute('cx', String(shape.x));
+          el.setAttribute('cy', String(shape.y));
+          el.setAttribute('r', String(shape.radius));
+        } else {
+          el = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          el.setAttribute('x1', String(shape.x));
+          el.setAttribute('y1', String(shape.y));
+          el.setAttribute('x2', String(shape.x2));
+          el.setAttribute('y2', String(shape.y2));
+        }
+
+        if (shape.fill && shape.fill !== 'none') {
+          el.setAttribute('fill', shape.fill);
+        } else {
+          el.setAttribute('fill', 'none');
+        }
+
+        if (shape.stroke && shape.stroke !== 'none') {
+          el.setAttribute('stroke', shape.stroke);
+          el.setAttribute('stroke-width', String(shape.strokeWidth || 1));
+        }
+
+        if (shape.opacity && shape.opacity < 1) {
+          el.setAttribute('opacity', String(shape.opacity));
+        }
+
+        // Animation: fade + slight scale
+        el.style.opacity = '0';
+        el.style.transform = 'scale(0.95)';
+        el.style.transformOrigin = 'center';
+        el.style.transition = `opacity 0.4s ease ${index * 80}ms, transform 0.4s ease ${index * 80}ms`;
+
+        svg.appendChild(el);
+
+        // Trigger animation
+        requestAnimationFrame(() => {
+          el.style.opacity = String(shape.opacity || 1);
+          el.style.transform = 'scale(1)';
+        });
+      });
+    }
+
+    function render() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+
+      // Reset seed to get same composition
+      seed = parseInt(seedValue!, 10);
+      const shapes = generateComposition();
+      renderShapes(shapes);
+    }
+
+    function revealContent() {
+      setTimeout(() => contentHeader?.classList.add('visible'), 200);
+      setTimeout(() => contentFooter?.classList.add('visible'), 400);
+    }
+
+    function init() {
+      render();
+      revealContent();
+    }
+
+    let resizeTimeout: number;
+    function handleResize() {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(render, 150);
+    }
+
+    init();
+    window.addEventListener('resize', handleResize);
+  }
+
+  initDesignCanvas();
+  document.addEventListener('astro:page-load', initDesignCanvas);
+</script>
