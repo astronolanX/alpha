@@ -6,10 +6,21 @@ interface Props {
   description?: string;
 }
 
+const SITE = {
+  name: "Nolan's Portfolio",
+  url: 'https://astronolan.com',
+  author: 'Nolan Figueroa',
+  description: 'UX designer and frontend developer bridging design and engineering to build accessible, scalable experiences.',
+  keywords: 'UX design, frontend development, design systems, accessibility, WCAG, React, Angular, Figma, user research, interaction design, human-computer interaction'
+};
+
 const {
-  title = 'Alpha',
-  description = 'A dynamic portfolio experience'
+  title,
+  description = SITE.description
 } = Astro.props;
+
+const pageTitle = title ? `${title} | ${SITE.name}` : SITE.name;
+const canonicalUrl = new URL(Astro.url.pathname, SITE.url).href;
 ---
 
 <!doctype html>
@@ -17,10 +28,31 @@ const {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Primary Meta Tags -->
+    <title>{pageTitle}</title>
+    <meta name="title" content={pageTitle} />
     <meta name="description" content={description} />
+    <meta name="author" content={SITE.author} />
+    <meta name="keywords" content={SITE.keywords} />
     <meta name="generator" content={Astro.generator} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:site_name" content={SITE.name} />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:url" content={canonicalUrl} />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+
+    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>{title}</title>
   </head>
   <body>
     <slot />
